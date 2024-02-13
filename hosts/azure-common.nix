@@ -48,5 +48,6 @@
     git
     vim
     htop
+    cloud-init
   ];
 }

@@ -69,8 +69,8 @@ locals {
   opts = {
     priv = {
       vm_size_binarycache = "Standard_D1_v2"
-      vm_size_builder     = "Standard_D2_v3"
-      vm_size_controller  = "Standard_D2_v3"
+      vm_size_builder     = "Standard_D4_v3"
+      vm_size_controller  = "Standard_D4_v3"
       num_builders        = 1
     }
     dev = {

@@ -191,15 +191,19 @@ in {
   # Configure Nix to use this as a substitutor, and the public key used for signing.
   nix.settings.trusted-public-keys = [
     "ghaf-infra-dev:EdgcUJsErufZitluMOYmoJDMQE+HFyveI/D270Cr84I="
+    "cache.vedenemo.dev:8NhplARANhClUSWJyLVk4WMyy1Wb4rhmWW2u8AejH9E="
+    "ghaf-dev.cachix.org-1:S3M8x3no8LFQPBfHw1jl6nmP8A7cVWKntoMKN3IsEQY="
   ];
   nix.settings.substituters = [
     "http://localhost:8080"
+    "https://cache.vedenemo.dev"
+    "https://ghaf-dev.cachix.org?priority=20"
   ];
   nix.extraOptions = ''
     builders-use-substitutes = true
     builders = @/etc/nix/machines
     # Build remote by default
-    max-jobs = 0
+    max-jobs = 8
     post-build-hook = ${post-build-hook}
   '';
 
