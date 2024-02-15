@@ -68,18 +68,41 @@ in {
     ];
   };
 
+  # https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/continuous-integration/jenkins/default.nix
   services.jenkins = {
     enable = true;
     listenAddress = "localhost";
     port = 8081;
     withCLI = true;
+    # See:
+    # https://search.nixos.org/options?query=services.jenkins
+    # https://jenkins-job-builder.readthedocs.io/en/latest/triggers.html#triggers.github
+    # https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/continuous-integration/jenkins/job-builder.nix
+    # https://github.com/search?q=jobBuilder+language%3ANix+&type=code
+    jobBuilder = {
+      enable = true;
+      nixJobs = [
+        {
+          job = {
+            name = "test-job-builder";
+            # Runs every 5th minute
+            triggers = [{timed = "*/5 * * * *";}];
+            builders = [
+              {
+                shell = ''
+                  echo "Running test-job-builder"
+                '';
+              }
+            ];
+          };
+        }
+      ];
+    };
   };
-  systemd.services.jenkins.after = ["multi-user.target"];
-  systemd.services.jenkins.requires = ["multi-user.target"];
-  systemd.services.jenkins.serviceConfig = {
-    Restart = "on-failure";
-    RestartSec = 1;
-  };
+  systemd.services.jenkins-job-builder.after = ["jenkins.service"];
+  systemd.services.jenkins-job-builder.requires = ["jenkins.service"];
+  systemd.services.jenkins-job-builder.serviceConfig = {Restart = "on-failure";};
+  systemd.services.jenkins.serviceConfig = {Restart = "on-failure";};
 
   # set StateDirectory=jenkins, so state volume has the right permissions
   # and we wait on the mountpoint to appear.
