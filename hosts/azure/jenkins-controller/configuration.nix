@@ -73,13 +73,9 @@ in {
     listenAddress = "localhost";
     port = 8081;
     withCLI = true;
+    extraJavaOptions = ["-Djenkins.install.runSetupWizard=false"];
   };
-  systemd.services.jenkins.after = ["multi-user.target"];
-  systemd.services.jenkins.requires = ["multi-user.target"];
-  systemd.services.jenkins.serviceConfig = {
-    Restart = "on-failure";
-    RestartSec = 1;
-  };
+  systemd.services.jenkins.serviceConfig = {Restart = "on-failure";};
 
   # set StateDirectory=jenkins, so state volume has the right permissions
   # and we wait on the mountpoint to appear.
