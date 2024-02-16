@@ -37,6 +37,11 @@
       url = "github:nix-community/flake-compat";
       flake = false;
     };
+    # For generating/updating the list of Jenkins plugins
+    jenkinsPlugins2nix = {
+      url = "github:Fuuzetsu/jenkinsPlugins2nix";
+      inputs.flake-compat.follows = "flake-compat";
+    };
   };
 
   outputs = inputs @ {

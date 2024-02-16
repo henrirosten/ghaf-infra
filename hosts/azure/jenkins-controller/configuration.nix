@@ -74,6 +74,7 @@ in {
     port = 8081;
     withCLI = true;
     extraJavaOptions = ["-Djenkins.install.runSetupWizard=false"];
+    plugins = import ./jenkins-plugins.nix {inherit (pkgs) fetchurl stdenv;};
   };
   systemd.services.jenkins.serviceConfig = {Restart = "on-failure";};
 

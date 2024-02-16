@@ -2,7 +2,34 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 {
-  perSystem = {pkgs, ...}: {
+  perSystem = {
+    pkgs,
+    inputs',
+    ...
+  }: let
+    update-jenkins-plugins = with pkgs; let
+      plugins = with builtins;
+        concatStringsSep " "
+        (map
+          (plugin: "-p ${plugin}")
+          [
+            "configuration-as-code"
+            "github"
+            "workflow-aggregator"
+          ]);
+    in
+      # Update jenkins plugins with:
+      # nix develop --command 'update-jenkins-plugins' >hosts/azure/jenkins-controller/jenkins-plugins.nix && nix fmt
+      # Note: nixpkgs jenkins version might not work with the plugin versions
+      # updated with 'update-jenkins-plugins'.
+      # It seems it would be very hard to maintain installed plugin versions like this.
+      writeShellApplication {
+        name = "update-jenkins-plugins";
+        text = ''
+          ${pkgs.lib.getExe' inputs'.jenkinsPlugins2nix.packages.jenkinsPlugins2nix "jenkinsPlugins2nix"} ${plugins}
+        '';
+      };
+  in {
     devShells.default = pkgs.mkShell {
       packages = with pkgs; [
         azure-cli
@@ -30,6 +57,7 @@
           p.sops
           p.tls
         ]))
+        update-jenkins-plugins
       ];
     };
   };
