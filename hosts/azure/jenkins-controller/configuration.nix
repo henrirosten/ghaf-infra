@@ -21,6 +21,25 @@
     exec nix --extra-experimental-features nix-command copy --to 'http://localhost:8080?secret-key=/etc/secrets/nix-signing-key&compression=zstd' $OUT_PATHS
   '';
 
+  jenkins-groovy = pkgs.writeText "groovy" ''
+    #!groovy
+
+    import jenkins.model.*
+    import jenkins.install.*;
+    import hudson.security.*
+
+    def instance = Jenkins.getInstance()
+    // Disable Setup Wizard
+    instance.setInstallState(InstallState.INITIAL_SETUP_COMPLETED)
+
+    // TODO: https://plugins.jenkins.io/github-oauth/
+    // Allow anonymous read access
+    def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
+    strategy.setAllowAnonymousRead(true)
+    instance.setAuthorizationStrategy(strategy)
+    instance.save()
+  '';
+
   get-secret =
     pkgs.writers.writePython3 "get-secret" {
       libraries = with pkgs.python3.pkgs; [azure-keyvault-secrets azure-identity];
@@ -73,7 +92,17 @@ in {
     listenAddress = "localhost";
     port = 8081;
     withCLI = true;
-    extraJavaOptions = ["-Djenkins.install.runSetupWizard=false"];
+    packages = with pkgs; [
+      bashInteractive # 'sh' step in jenkins pipeline requires this
+      coreutils
+      nix
+      git
+      zstd
+    ];
+    extraJavaOptions = [
+      # Useful when the 'sh' step fails:
+      "-Dorg.jenkinsci.plugins.durabletask.BourneShellScript.LAUNCH_DIAGNOSTICS=true"
+    ];
   };
   systemd.services.jenkins.serviceConfig = {Restart = "on-failure";};
 
@@ -81,6 +110,28 @@ in {
   # and we wait on the mountpoint to appear.
   # https://github.com/NixOS/nixpkgs/pull/272679
   systemd.services.jenkins.serviceConfig.StateDirectory = "jenkins";
+
+  # Install jenkins plugins, apply initial jenkins config
+  systemd.services.jenkins-config = {
+    after = ["jenkins.service"];
+    wantedBy = ["multi-user.target"];
+    # Make `jenkins-cli` available
+    path = with pkgs; [jenkins];
+    # Implicit URL parameter for `jenkins-cli`
+    environment = {
+      JENKINS_URL = "http://localhost:8081";
+    };
+    script = let
+      jenkins-auth = "-auth admin:\"$(cat /var/lib/jenkins/secrets/initialAdminPassword)\"";
+    in ''
+      # Install plugins
+      jenkins-cli ${jenkins-auth} install-plugin "workflow-aggregator" "github" -deploy
+
+      # Jenkins groovy config
+      jenkins-cli ${jenkins-auth} groovy = < ${jenkins-groovy}
+    '';
+  };
+  systemd.services.jenkins-config.serviceConfig = {Restart = "on-failure";};
 
   # Define a fetch-remote-build-ssh-key unit populating
   # /etc/secrets/remote-build-ssh-key from Azure Key Vault.
