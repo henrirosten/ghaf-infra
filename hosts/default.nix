@@ -39,6 +39,7 @@ in {
     nixos-az-binary-cache = ./azure/binary-cache/configuration.nix;
     nixos-az-builder = ./azure/builder/configuration.nix;
     nixos-az-jenkins-controller = ./azure/jenkins-controller/configuration.nix;
+    nixos-az-testagent = ./azure/testagent/configuration.nix;
     nixos-binarycache = ./binarycache/configuration.nix;
     nixos-build3 = ./builders/build3/configuration.nix;
     nixos-build4 = ./builders/build4/configuration.nix;
@@ -63,6 +64,7 @@ in {
       "az-binary-cache"
       "az-builder"
       "az-jenkins-controller"
+      "az-testagent"
       "binarycache"
       "build3"
       "build4"
