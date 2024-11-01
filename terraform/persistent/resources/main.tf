@@ -2,8 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 provider "azurerm" {
-  # https://github.com/hashicorp/terraform-provider-azurerm/issues/24804
-  skip_provider_registration = true
+  subscription_id = "ab019b18-dc67-4c87-885b-fcd6b5a39913"
   features {}
 }
 

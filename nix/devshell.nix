@@ -38,8 +38,8 @@
             (p.azurerm.override {
               owner = "hashicorp";
               repo = "terraform-provider-azurerm";
-              rev = "v3.85.0";
-              hash = "sha256-YXVSApUnJlwxIldDoijl72rA9idKV/vGRf0tAiaH8cc=";
+              rev = "v4.8.0";
+              hash = "sha256-xxPcd4Iv9lpwwauDUswloT2/kamCVn6f1nkU4MjjAAM=";
               vendorHash = null;
             })
             p.external

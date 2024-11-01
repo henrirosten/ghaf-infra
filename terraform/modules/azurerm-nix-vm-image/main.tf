@@ -37,6 +37,7 @@ resource "azurerm_image" "default" {
     blob_uri = azurerm_storage_blob.default.url
     os_state = "Generalized"
     os_type  = "Linux"
+    storage_type = "StandardSSD_LRS"
   }
 }
 

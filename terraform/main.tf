@@ -2,8 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 provider "azurerm" {
-  # https://github.com/hashicorp/terraform-provider-azurerm/issues/24804
-  skip_provider_registration = true
+  subscription_id = "ab019b18-dc67-4c87-885b-fcd6b5a39913"
   features {}
 }
 
@@ -16,7 +15,7 @@ terraform {
       # but makes terraform emit an error message in case the azurerm
       # version cached in local .terraform directory for one reason
       # or another does not match what is stated below.
-      version = "=3.85.0"
+      version = "=4.8.0"
     }
     secret = {
       source = "numtide/secret"
