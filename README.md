@@ -4,6 +4,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 -->
 
 
+
 # Ghaf Infra
 This repository contains NixOS configurations for the [Ghaf](https://github.com/tiiuae/ghaf) CI/CD infrastructure.
 
