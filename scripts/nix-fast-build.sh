@@ -107,7 +107,7 @@ nix_fast_build () {
       --remote-ssh-option StrictHostKeyChecking no \
       --remote-ssh-option UserKnownHostsFile /dev/null \
       --remote-ssh-option ConnectTimeout 10 \
-      --no-download --skip-cached --no-nom \
+      --no-nom \
       $OPTS \
       2>&1
     ret="$?"
