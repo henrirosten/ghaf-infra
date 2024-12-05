@@ -105,10 +105,10 @@ locals {
       osdisk_size_builder     = "150"
       vm_size_controller      = "Standard_E4_v5"
       osdisk_size_controller  = "150"
-      num_builders_x86        = 0
-      num_builders_aarch64    = 0
-      ext_builder_machines    = local.ext_builder_machines
-      ext_builder_keyscan     = local.ext_builder_keyscan
+      num_builders_x86        = 1
+      num_builders_aarch64    = 1
+      ext_builder_machines    = []
+      ext_builder_keyscan     = []
     }
     dev = {
       persistent_id           = "prod"
