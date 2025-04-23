@@ -3,6 +3,15 @@
 {
   description = "NixOS configurations for Ghaf Infra";
 
+  nixConfig = {
+    extra-trusted-substituters = [
+      "https://ghaf-dev.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "ghaf-dev.cachix.org-1:S3M8x3no8LFQPBfHw1jl6nmP8A7cVWKntoMKN3IsEQY="
+    ];
+  };
+
   inputs = {
     # Nixpkgs
     nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
