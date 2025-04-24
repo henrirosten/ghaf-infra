@@ -23,7 +23,7 @@
 
   sops = {
     defaultSopsFile = ./secrets.yaml;
-    secrets.cachix-auth-token.owner = "root";
+    secrets.cachix-auth-token.owner = "github";
   };
 
   networking.hostName = "build1";
@@ -33,10 +33,13 @@
     logs.enable = true;
   };
 
-  services.cachix-watch-store = {
-    enable = true;
-    verbose = true;
-    cacheName = "ghaf-dev";
-    cachixTokenFile = config.sops.secrets.cachix-auth-token.path;
-  };
+  # Export CACHIX_AUTH_TOKEN for 'github' user to allow cachix uploads.
+  # We could use services.cachix-watch-store too, but we don't want to
+  # trigger uploads for all nix builds. This allows finer control over
+  # when a cachix push is triggered:
+  environment.shellInit = ''
+    if [ "$USER" = "github" ]; then
+      export CACHIX_AUTH_TOKEN=$(cat ${config.sops.secrets.cachix-auth-token.path})
+    fi
+  '';
 }
