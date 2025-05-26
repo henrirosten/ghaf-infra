@@ -14,6 +14,7 @@ Experimental feature "nix-command" must be enabled.
 
 Clone this repository:
 
+
 ```bash
 ❯ git clone https://github.com/tiiuae/ghaf-infra.git
 ❯ cd ghaf-infra
