@@ -19,9 +19,6 @@ jobs:
     # Important: 'authorize' must run before checkout to ensure 'authorize.yml'
     # runs the base version, not the untrusted version from the PR.
     uses: ./.github/workflows/authorize.yml
-    # Skip running in forked repositories, since the workflow run would fail
-    # due to missing repository secret(s):
-    if: ${{ github.repository == 'tiiuae/ghaf-infra' }}
     with:
       github-org: tiiuae
     secrets:
