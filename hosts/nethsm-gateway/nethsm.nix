@@ -29,28 +29,12 @@ let
     systemd-sbsign
     nethsm-pkcs11
     nethsm-exporter
-    softhsm2
     ;
 
-  hsmModulePaths = {
+  pkcs11Modules = {
     nethsm = "${nethsm-pkcs11}/lib/libnethsm_pkcs11.so";
-    softhsm = "${softhsm2}/lib/softhsm/libsofthsm2.so";
-  };
-
-  hsmModule = hsmModulePaths.${config.pkcs11.module};
-
-  softhsmEnv = {
-    SOFTHSM2_CONF = toString (
-      pkgs.writeText "softhsm2.conf" ''
-        directories.tokendir = /var/lib/softhsm/tokens 
-        objectstore.backend = file
-        log.level = INFO
-        slots.removable = false
-        slots.mechanisms = ALL
-        library.reset_on_fork = false
-      ''
-    );
-    CERTSDIR = "/var/lib/softhsm/certs";
+    yubihsm = "${pkgs.yubihsm-shell}/lib/pkcs11/yubihsm_pkcs11.so";
+    p11-kit = "${pkgs.p11-kit}/lib/p11-kit-proxy.so";
   };
 in
 {
@@ -81,10 +65,6 @@ in
       proxy.listenAddr = lib.mkOption {
         type = lib.types.str;
         default = "0.0.0.0";
-      };
-      module = lib.mkOption {
-        type = lib.types.enum (builtins.attrNames hsmModulePaths);
-        description = "Select which HSM module to use";
       };
     };
   };
@@ -126,8 +106,6 @@ in
 
     systemd.tmpfiles.rules = [
       "f /var/log/libnethsm.log 0770 root nethsm - -"
-      "d /var/lib/softhsm/tokens 0770 root nethsm - -"
-      "d /var/lib/softhsm/certs 0770 root nethsm - -"
     ];
 
     # https://docs.nitrokey.com/nethsm/pkcs11-setup#configuration-file-format
@@ -140,7 +118,7 @@ in
 
           slots:
             - label: NetHSM
-              description: Tampere Office NetHSM 
+              description: Tampere Office NetHSM
 
               operator:
                 username: ghafinfrasign~ghafsigner
@@ -175,19 +153,46 @@ in
     environment.systemPackages =
       (with pkgs; [
         openssl
+        screen
+        minicom
         pynitrokey # nitropy
         opensc # pkcs11-tool
         gnutls # psktool
+        yubihsm-shell
+        p11-kit
       ])
       ++ [
         systemd-sbsign
-        softhsm2 # softhsm2-util
         pkcs11-proxy
       ];
 
+    # PKCS#11 modules that p11-kit will load
+    # https://p11-glue.github.io/p11-glue/p11-kit/manual/pkcs11-conf.html
+    environment.etc = {
+      # NetHSM module, used by the proxy
+      "pkcs11/modules/nethsm.module".text = ''
+        module: ${pkcs11Modules.nethsm}
+        priority: 3
+      '';
+      # YubiHSM module, disabled in the proxy
+      # Can be used as backup if NetHSM is not functional, by enabling it
+      "pkcs11/modules/yubihsm.module".text = ''
+        module: ${pkcs11Modules.yubihsm}
+        priority: 2
+        disable-in: pkcs11-daemon
+      '';
+    };
+
     environment.variables = {
       # can be used with pkcs11-tool --module
-      HSM_MODULE = hsmModule;
+      P11MODULE = pkcs11Modules.p11-kit;
+
+      # https://docs.yubico.com/hardware/yubihsm-2/hsm-2-user-guide/hsm2-sdk-tools-libraries.html#hsm2-pkcs11-configuration-sample-label
+      YUBIHSM_PKCS11_CONF = toString (
+        pkgs.writeText "yubihsm_pkcs11.conf" ''
+          connector=http://127.0.0.1:12345
+        ''
+      );
 
       # https://github.com/latchset/pkcs11-provider/blob/main/HOWTO.md
       OPENSSL_CONF = toString (
@@ -209,21 +214,21 @@ in
             [pkcs11_sect]
             activate = 1
             module = "${pkcs11-provider}/lib/ossl-modules/pkcs11.so"
-            pkcs11-module-path = ${hsmModule}
-            ${lib.optionalString (config.pkcs11.module == "softhsm") # toml
-              ''
-                # quirks for softhsm2 to avoid segfault
-                # see https://github.com/latchset/pkcs11-provider/blob/663dea335c80bec7fd96d544ff875af08d6461a9/tests/softhsm-init.sh#L64
-                # and https://github.com/openssl/openssl/issues/22508#issuecomment-1780033252
-                pkcs11-module-quirks = no-deinit no-operation-state
-              ''
-            }
+            pkcs11-module-path = ${pkcs11Modules.p11-kit} 
+            pkcs11-module-quirks = no-deinit
           ''
       );
 
       # Extra cert creation config can be loaded from ci-yubi repo
       OPENSSL_EXTRA_CONF = "${inputs.ci-yubi}/secboot/conf";
-    } // softhsmEnv;
+    };
+
+    systemd.services.yubihsm-connector = {
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        ExecStart = "${lib.getExe pkgs.yubihsm-connector} -d -t 5000";
+      };
+    };
 
     systemd.services.pkcs11-daemon = {
       wantedBy = [ "multi-user.target" ];
@@ -231,10 +236,10 @@ in
       environment = {
         PKCS11_DAEMON_SOCKET = "tls://${config.pkcs11.proxy.listenAddr}:${toString config.pkcs11.proxy.listenPort}";
         PKCS11_PROXY_TLS_PSK_FILE = config.sops.secrets.tls-pks-file.path;
-      } // softhsmEnv;
+      };
 
       serviceConfig = {
-        ExecStart = "${lib.getExe pkcs11-proxy} ${hsmModule}";
+        ExecStart = "${lib.getExe pkcs11-proxy} ${pkcs11Modules.p11-kit}";
       };
     };
   };

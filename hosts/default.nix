@@ -27,7 +27,8 @@ let
       inherit specialArgs;
       modules = [
         self.nixosModules."nixos-${systemName}"
-      ] ++ lib.optional (extraConfig != null) extraConfig;
+      ]
+      ++ lib.optional (extraConfig != null) extraConfig;
     };
 in
 {
@@ -58,6 +59,7 @@ in
     nixos-ghaf-auth = ./ghaf-auth/configuration.nix;
     nixos-ghaf-monitoring = ./ghaf-monitoring/configuration.nix;
     nixos-ghaf-lighthouse = ./ghaf-lighthouse/configuration.nix;
+    nixos-ghaf-fleetdm = ./ghaf-fleetdm/configuration.nix;
     nixos-testagent-uae-dev = ./testagent/uae-dev/configuration.nix;
     nixos-hetzci-dev = ./hetzci/dev/configuration.nix;
     nixos-hetzci-prod = ./hetzci/prod/configuration.nix;
@@ -67,6 +69,7 @@ in
     nixos-hetz86-builder = ./builders/hetz86-builder/configuration.nix;
     nixos-hetz86-rel-1 = ./builders/hetz86-rel-1/configuration.nix;
     nixos-uae-lab-node1 = ./uae/lab/node1/configuration.nix;
+    nixos-uae-nethsm-gateway = ./uae/nethsm-gateway/configuration.nix;
   };
 
   # Expose as flake.lib.mkNixOS.
@@ -100,6 +103,7 @@ in
           "ghaf-auth"
           "ghaf-monitoring"
           "ghaf-lighthouse"
+          "ghaf-fleetdm"
           "testagent-uae-dev"
           "hetzci-dev"
           "hetzci-prod"
@@ -108,6 +112,7 @@ in
           "hetz86-builder"
           "hetz86-rel-1"
           "uae-lab-node1"
+          "uae-nethsm-gateway"
         ]
     ))
     // {

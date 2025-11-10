@@ -5,7 +5,6 @@
   inputs,
   lib,
   config,
-  machines,
   ...
 }:
 {
@@ -13,28 +12,46 @@
     ./disk-config.nix
     inputs.sops-nix.nixosModules.sops
     inputs.disko.nixosModules.disko
-    ./nethsm.nix
   ]
   ++ (with self.nixosModules; [
     common
     team-devenv
+    user-bmg
     service-openssh
-    service-monitoring
     service-nebula
   ]);
 
   sops = {
     defaultSopsFile = ./secrets.yaml;
     secrets = {
-      loki_password.owner = "promtail";
       nebula-cert.owner = config.nebula.user;
       nebula-key.owner = config.nebula.user;
     };
   };
 
   nixpkgs.hostPlatform = "x86_64-linux";
-  networking.hostName = "nethsm-gateway";
-  networking.useDHCP = true;
+  networking.hostName = "uae-nethsm-gateway";
+
+  # Assign IP configs because dhcp is disabled in network
+  networking = {
+    useDHCP = true;
+    interfaces.enp3s0 = {
+      ipv4.addresses = [
+        {
+          address = "172.31.141.51";
+          prefixLength = 24;
+        }
+      ];
+    };
+    defaultGateway = {
+      address = "172.31.141.1";
+      interface = "enp3s0";
+    };
+    nameservers = [
+      "10.161.10.11"
+      "10.161.10.12"
+    ];
+  };
 
   hardware = {
     enableRedistributableFirmware = true;
@@ -53,39 +70,11 @@
       "thunderbolt"
       "ahci"
       "nvme"
-      "uas"
       "usbhid"
+      "usb_storage"
       "sd_mod"
     ];
   };
-
-  nethsm.host = "192.168.70.10";
-  pkcs11.proxy.listenAddr = machines.nethsm-gateway.nebula_ip;
-
-  services.monitoring = {
-    metrics.enable = true;
-    logs = {
-      enable = true;
-      lokiAddress = "https://monitoring.vedenemo.dev";
-      auth.password_file = config.sops.secrets.loki_password.path;
-    };
-  };
-
-  services.promtail.configuration.scrape_configs = [
-    {
-      job_name = "system";
-      static_configs = [
-        {
-          targets = [ "localhost" ];
-          labels = {
-            job = "nethsm-log";
-            host = config.networking.hostName;
-            __path__ = config.nethsm.logging.file;
-          };
-        }
-      ];
-    }
-  ];
 
   nebula = {
     enable = true;
@@ -95,11 +84,14 @@
 
   services.nebula.networks."vedenemo".firewall = {
     outbound = lib.mkForce [
-      # allow udp outbound only to hetzner
+      # allow udp outbound only to hetzner, uae-lab
       {
         port = 4242;
         proto = "udp";
-        groups = [ "hetzner" ];
+        groups = [
+          "hetzner"
+          "uae-lab"
+        ];
       }
       # allow dns requests
       {
@@ -120,17 +112,13 @@
       }
     ];
     inbound = [
-      # allow monitoring server to scrape nethsm metrics
       {
-        inherit (config.nethsm.exporter) port;
+        port = 22;
         proto = "tcp";
-        groups = [ "scraper" ];
-      }
-      # pkcs11-daemon
-      {
-        port = config.pkcs11.proxy.listenPort;
-        proto = "tcp";
-        host = "any";
+        groups = [
+          "hetzner"
+          "uae-lab"
+        ];
       }
     ];
   };

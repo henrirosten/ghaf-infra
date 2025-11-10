@@ -7,21 +7,23 @@
   ...
 }:
 {
-  imports =
-    [
-      ../agents-common.nix
-      ./disk-config.nix
-    ]
-    ++ (with self.nixosModules; [
-      team-devenv
-      team-testers
-      user-flokli
-    ]);
+  imports = [
+    ../agents-common.nix
+    ./disk-config.nix
+  ]
+  ++ (with self.nixosModules; [
+    service-nebula
+    team-devenv
+    team-testers
+    user-flokli
+  ]);
 
   sops = {
     defaultSopsFile = ./secrets.yaml;
     secrets = {
       metrics_password.owner = "promtail";
+      nebula-cert.owner = config.nebula.user;
+      nebula-key.owner = config.nebula.user;
     };
   };
 
@@ -47,6 +49,12 @@
       "orin-nx"
       "orin-agx-64"
     ];
+  };
+
+  nebula = {
+    enable = true;
+    cert = config.sops.secrets.nebula-cert.path;
+    key = config.sops.secrets.nebula-key.path;
   };
 
   # udev rules for test devices serial connections

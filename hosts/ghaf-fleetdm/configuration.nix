@@ -18,28 +18,18 @@
     common
     service-openssh
     team-devenv
-    user-bmg
-    user-flokli
+    user-vadikas
   ]);
 
-  system.stateVersion = lib.mkForce "24.05";
   nixpkgs.hostPlatform = "x86_64-linux";
-
+  networking.hostName = "ghaf-fleetdm";
+  system.stateVersion = lib.mkForce "25.05";
   sops.defaultSopsFile = ./secrets.yaml;
 
-  services.monitoring = {
-    metrics.enable = true;
-    logs.enable = true;
-  };
-
-  networking.hostName = "ghaf-proxy";
+  virtualisation.docker.enable = true;
 
   environment.systemPackages = with pkgs; [
-    screen
-    tmux
-    azure-cli
-    dnsutils
-    inetutils
-    openssl
+    fleet
+    fleetctl
   ];
 }

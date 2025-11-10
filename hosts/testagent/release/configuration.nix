@@ -6,17 +6,16 @@
   ...
 }:
 {
-  imports =
-    [
-      ../agents-common.nix
-      ./disk-config.nix
-    ]
-    ++ (with self.nixosModules; [
-      service-nebula
-      team-devenv
-      team-testers
-      user-flokli
-    ]);
+  imports = [
+    ../agents-common.nix
+    ./disk-config.nix
+  ]
+  ++ (with self.nixosModules; [
+    service-nebula
+    team-devenv
+    team-testers
+    user-flokli
+  ]);
 
   sops = {
     defaultSopsFile = ./secrets.yaml;
@@ -106,7 +105,7 @@
         relay_serial_port = "/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A10KZMAN-if00-port0";
         OrinAGX1 = {
           inherit location;
-          serial_port = "/dev/ttyACM0";
+          serial_port = "/dev/ttyAGX1";
           relay_number = 2;
           device_ip_address = "172.18.16.51";
           socket_ip_address = "NONE";
