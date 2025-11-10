@@ -3,6 +3,7 @@ SPDX-FileCopyrightText: 2022-2025 TII (SSRC) and the Ghaf contributors
 SPDX-License-Identifier: CC-BY-SA-4.0
 -->
 
+
 # Ghaf Infra
 
 This repository contains NixOS and Terraform configuration for the [Ghaf](https://github.com/tiiuae/ghaf) CI/CD infrastructure.
@@ -23,6 +24,7 @@ Bootstrap nix shell with the required dependencies:
 ```bash
 ❯ nix develop
 ```
+
 
 All commands referenced in the documentation are executed inside the nix-shell.
 
