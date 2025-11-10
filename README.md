@@ -25,6 +25,7 @@ Bootstrap nix shell with the required dependencies:
 ❯ nix develop
 ```
 
+
 All commands referenced in the documentation are executed inside the nix-shell.
 
 ## Directory Structure
