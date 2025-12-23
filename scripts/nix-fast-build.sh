@@ -257,8 +257,6 @@ fast_build() {
       ln -sfn "$path" "$link_name"
     done < <(grep -E '^/nix/store/[^ ]+$' "$logfile")
   fi
-  # This function runs in its own process; set the process exit status:
-  exit $ret
 }
 
 ################################################################################
@@ -278,10 +276,6 @@ main() {
   # Build TARGETS with nix-fast-build
   echo "[+] Running builds ..."
   # Run the function 'fast_build' for each flake target in TARGETS[]
-  # array. Each instance of fast_build will run in its own process.
-  # We limit the maximum number of concurrent processes with -j and
-  # terminate the execution of all jobs immediately if one job fails
-  # (-e). Keep-order (-k) keeps the output logs readable.
   export -f fast_build nix-fast-build
   export OPTS TMPDIR SYMLINK
   printf '%s\n' "${TARGETS[@]}" | parallel -j 2 -e -k fast_build {}
