@@ -11,14 +11,14 @@
 
 # TODO: we should file a PR to implement the '--filter' option directly in
 # nix-fast-build. Also, '-s' in this wrapper is a workaround to an issue
-# that should be fixed in nix-fast-build: see more details in function
-# 'symlink_results' in this file.
+# that should be fixed in nix-fast-build.
 
 ################################################################################
 
 set -e          # exit immediately if a command fails
 set -E          # exit immediately if a command fails (subshells)
 set -u          # treat unset variables as an error and exit
+set -a          # export all variables and functions to subshells
 set -o pipefail # exit if any pipeline command fails
 
 TMPDIR="$(mktemp -d --suffix .tmpbuild)"
@@ -107,9 +107,8 @@ on_exit() {
 }
 
 parallel() {
-  # Gnu parallel in nixos-unstable does not work correctly for our use-case,
-  # therefore, using the version from 24.11. TODO: file a bug in nixpkgs.
-  nix run nixpkgs/nixos-24.11#parallel -- "$@"
+  # https://github.com/NixOS/nix/issues/4498
+  nix shell --inputs-from .# nixpkgs#rush-parallel -c rush "$@"
 }
 
 nix-fast-build() {
@@ -260,8 +259,6 @@ fast_build() {
       ln -sfn "$path" "$link_name"
     done < <(grep -E '^/nix/store/[^ ]+$' "$logfile")
   fi
-  # This function runs in its own process; set the process exit status:
-  exit $ret
 }
 
 ################################################################################
@@ -281,14 +278,7 @@ main() {
   # Build TARGETS with nix-fast-build
   echo "[+] Running builds ..."
   # Run the function 'fast_build' for each flake target in TARGETS[]
-  # array. Each instance of fast_build will run in its own process.
-  # We limit the maximum number of concurrent processes with -j and
-  # terminate the execution of all jobs immediately if one job fails
-  # (--halt 2). Keep-order (-k) and line-buffer (--lb) keep the output
-  # logs readable.
-  export -f fast_build nix-fast-build
-  export OPTS TMPDIR SYMLINK
-  parallel --will-cite -j 2 --halt 2 -k --lb fast_build ::: "${TARGETS[@]}"
+  printf '%s\n' "${TARGETS[@]}" | parallel -j 3 -e -k fast_build {}
 }
 
 main "$@"
