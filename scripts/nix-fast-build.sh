@@ -11,8 +11,7 @@
 
 # TODO: we should file a PR to implement the '--filter' option directly in
 # nix-fast-build. Also, '-s' in this wrapper is a workaround to an issue
-# that should be fixed in nix-fast-build: see more details in function
-# 'symlink_results' in this file.
+# that should be fixed in nix-fast-build.
 
 ################################################################################
 
@@ -107,9 +106,7 @@ on_exit() {
 }
 
 parallel() {
-  # Gnu parallel in nixos-unstable does not work correctly for our use-case,
-  # therefore, using the version from 24.11. TODO: file a bug in nixpkgs.
-  nix run nixpkgs/nixos-24.11#parallel -- "$@"
+  nix shell --inputs-from .# nixpkgs#rush-parallel -c rush "$@"
 }
 
 nix-fast-build() {
@@ -284,11 +281,10 @@ main() {
   # array. Each instance of fast_build will run in its own process.
   # We limit the maximum number of concurrent processes with -j and
   # terminate the execution of all jobs immediately if one job fails
-  # (--halt 2). Keep-order (-k) and line-buffer (--lb) keep the output
-  # logs readable.
+  # (-e). Keep-order (-k) keeps the output logs readable.
   export -f fast_build nix-fast-build
   export OPTS TMPDIR SYMLINK
-  parallel --will-cite -j 2 --halt 2 -k --lb fast_build ::: "${TARGETS[@]}"
+  printf '%s\n' "${TARGETS[@]}" | parallel -j 2 -e -k fast_build {}
 }
 
 main "$@"
