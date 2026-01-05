@@ -107,9 +107,7 @@ on_exit() {
 }
 
 parallel() {
-  # Gnu parallel in nixos-unstable does not work correctly for our use-case,
-  # therefore, using the version from 24.11. TODO: file a bug in nixpkgs.
-  nix run nixpkgs/nixos-24.11#parallel -- "$@"
+  nix run nixpkgs/nixos-unstable#parallel -- "$@"
 }
 
 nix-fast-build() {
