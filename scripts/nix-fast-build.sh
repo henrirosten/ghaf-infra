@@ -107,7 +107,7 @@ on_exit() {
 }
 
 parallel() {
-  nix run nixpkgs/nixos-unstable#parallel -- "$@"
+  nix run nixpkgs/nixos-25.11#parallel -- "$@"
 }
 
 nix-fast-build() {
