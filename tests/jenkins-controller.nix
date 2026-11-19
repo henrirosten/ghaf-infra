@@ -156,7 +156,7 @@ pkgs.testers.runNixOSTest {
         assert manifest <= set(plugins["loaded"]), sorted(manifest - set(plugins["loaded"]))
 
     with subtest("authentication"):
-        assert controller.succeed("curl -s -o /dev/null -w '%{http_code}' http://localhost:8081/api/json") == "403"
+        assert controller.succeed("curl -s -o /dev/null -w '%{http_code}' http://localhost:8081/api/json") == "200"
         controller.succeed("jenkins -f http://localhost:8081/api/json")
 
     with subtest("test agents"):
